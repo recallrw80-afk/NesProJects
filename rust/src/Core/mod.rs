@@ -1,7 +1,7 @@
-pub mod APU;
-pub mod Bus;
-pub mod Cartridge;
-pub mod CPU;
-pub mod DMA;
-pub mod Mapper;
-pub mod PPU;
+pub mod apu;
+pub mod bus;
+pub mod cartridge;
+pub mod cpu;
+pub mod dma;
+pub mod mapper;
+pub mod ppu;

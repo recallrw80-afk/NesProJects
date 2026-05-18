@@ -1,6 +1,6 @@
-mod Bridge;
-mod Core;
-mod Frontend;
+mod bridge;
+mod core;
+mod frontend;
 
 fn main() {
     println!("Hello, world!");
