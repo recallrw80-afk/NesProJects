@@ -1,0 +1,13 @@
+[package]
+name = "Nes"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "Nes"
+path = "src/main.rs"
+
+
+[dependencies]
+core = { path = "../core" }
+ui = { path = "../ui" }

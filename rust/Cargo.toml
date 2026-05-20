@@ -1,6 +1,12 @@
-[package]
-name = "NesGame"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = [
+    "cli",
+    "core",
+    "ui"
+]
+default-members = ["cli"]
+resolver = "2"
 
-[dependencies]
+[workspace.dependencies]
+iced = { version="0.14.0", features = ["wgpu"] }
+

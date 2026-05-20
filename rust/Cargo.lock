@@ -3,5 +3,17 @@
 version = 4
 
 [[package]]
-name = "NesGame"
+name = "Nes"
+version = "0.1.0"
+dependencies = [
+ "core",
+ "ui",
+]
+
+[[package]]
+name = "core"
+version = "0.1.0"
+
+[[package]]
+name = "ui"
 version = "0.1.0"
