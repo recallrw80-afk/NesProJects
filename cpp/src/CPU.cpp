@@ -1,6 +1,2 @@
-
 #include <cstdint>
 
-struct Cpu {
-    
-}
