@@ -30,9 +30,18 @@ public:
     u8 ppu_read(u16 address);
     void ppu_write(u16 address, u8 value);
 
+    // 获取 mepper_id
     u16 get_mepper_id() const { return mapper_id; }
 
+    // 打印当前信息
     void print_info() const;
+};
+
+// 定义枚举，表示镜像模式
+enum Mirroring
+{
+    VERTICAL,   //编译器默认赋值为0
+    HORIZONTAL  //编译器默认赋值为1
 };
 
 
