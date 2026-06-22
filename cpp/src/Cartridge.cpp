@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 #include "Cartridge.h"
 #include <ios>
 #include <fstream>
@@ -33,4 +34,15 @@ bool Cartridge::load(const std::string& filename)
 
 
     return false;
+}
+
+void Cartridge::print_info() const
+{
+    std::cout << "=== Cartridge Info ===" << std::endl;
+    std::cout << "Mapper ID:       " << static_cast<int>(mapper_id) << std::endl;
+    std::cout << "PRG Banks:       " << static_cast<int>(prg_banks_count) << " (" << prg_banks_count * 16 << " KB)" << std::endl;
+    std::cout << "CHR Banks:       " << static_cast<int>(chr_banks_count) << " (" << chr_banks_count * 8 << " KB)" << std::endl;
+    std::cout << "Mirroring:       " << (mirroring ? "Vertical" : "Horizontal") << std::endl;
+    std::cout << "Battery RAM:     " << (battery_ram ? "Yes" : "No") << std::endl;
+    std::cout << "Trainer:         " << (trainer ? "Yes" : "No") << std::endl;
 }
