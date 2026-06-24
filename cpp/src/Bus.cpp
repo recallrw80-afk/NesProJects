@@ -31,22 +31,19 @@ constexpr u16 CART_SIZE = 0x04020;
  */
 Bus::Bus()
     : cpu_ram(CPU_RAM_SIZE, 0)
-    , cartridge(nullptr)
-    , cpu(nullptr)
-{
+      , cartridge(nullptr)
+      , cpu(nullptr) {
 }
 
-void Bus::insert_cartridge(Cartridge *cart)
-{
+void Bus::insert_cartridge(Cartridge *cart) {
     cartridge = cart;
 }
 
-void Bus::connect_cpu(CPU *cpu_ptr)
-{
+void Bus::connect_cpu(CPU *cpu_ptr) {
     cpu = cpu_ptr;
 }
 
-u8 Bus::cpu_read(u16 address){
+u8 Bus::cpu_read(u16 address) {
     //0x0000 - 0x1FFFF
     if (address < CPU_RAM_MASK)
         return cpu_ram[address & CPU_RAM_MASK];
