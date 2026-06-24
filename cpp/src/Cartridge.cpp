@@ -37,6 +37,10 @@
 constexpr size_t PRG_BANK_SIZE = 16384;
 // iNES 头部大小
 constexpr size_t HEADER_SIZE = 16;
+//Trainer 大小
+constexpr size_t TRAINER_SIZE = 512;
+// CHR-RAM 默认大小（8KB）
+constexpr size_t CHR_RAM_SIZE = 8192;
 
 bool Cartridge::load(const std::string& filename)
 {
@@ -68,19 +72,42 @@ bool Cartridge::load(const std::string& filename)
     mirroring = (flags6 & 0x01) ? VERTICAL : HORIZONTAL;
     battery_ram = (flags6 & 0x02);
     trainer = (flags6 & 0x04);
-    //
+
+    // Mapper Id
     mapper_id = (flags7 & 0xF0) | (flags6 >> 4);
 
-    //头部固定大小 16 字节
-    size_t rom_offset = 16;
-
+    //计算 ROM 数据起始偏移
+    size_t rom_offset = HEADER_SIZE;
     if ( trainer )
+        rom_offset += TRAINER_SIZE;
+
+    // 计算 PRG 和 CHR 数据大小
+    const size_t prg_size = prg_banks_count * PRG_BANK_SIZE;
+    const size_t char_size = chr_banks_count * CHR_RAM_SIZE;
+
+    // 越界检查
+    if (buffer.size() < rom_offset + prg_size + char_size)
+        return false;
+
+    //读取 PRG-ROM
+    prg_rom = std::vector<u8>(
+        buffer.begin() + rom_offset,
+        buffer.begin() + rom_offset + prg_size
+    );
+
+    //读取 CHR—ROM
+    if (chr_banks_count == 0)
     {
-        rom_offset += 512;
+        //8kb CHR-RAM 初始化为0
+        chr_rom.resize(CHR_RAM_SIZE,0);
     }
-
-    size_t prg_size = prg_banks_count * PRG_BANK_SIZE;
-
+    else
+    {
+        chr_rom = std::vector<u8>(
+            buffer.begin() + rom_offset + prg_size,
+            buffer.begin() + rom_offset + prg_size + char_size
+        );
+    }
 
     return true;
 }
