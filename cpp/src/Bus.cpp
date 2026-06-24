@@ -19,12 +19,18 @@ constexpr u16 APU_IO_END = 0x4017;
 constexpr u16 CART_SIZE = 0x04020;
 
 // Bus::Bus() {
-//     cpu_rom = std::vector<u8>(CPU_RAM_SIZE, u8(0));
+//     cpu_ram = std::vector<u8>(CPU_RAM_SIZE, u8(0));
 //     cartridge = nullptr;
 //     cpu = nullptr;
 // }
+/*
+效率更高（直接构造）
+对所有成员都适用
+风格统一
+避免以后成员改成 const、引用、无默认构造类型时重构代码
+ */
 Bus::Bus()
-    : cpu_rom(CPU_RAM_SIZE, 0)
+    : cpu_ram(CPU_RAM_SIZE, 0)
     , cartridge(nullptr)
     , cpu(nullptr)
 {
@@ -43,7 +49,7 @@ void Bus::connect_cpu(CPU *cpu_ptr)
 u8 Bus::cpu_read(u16 address){
     //0x0000 - 0x1FFFF
     if (address < CPU_RAM_MASK)
-        return cpu_rom[address & CPU_RAM_MASK];
+        return cpu_ram[address & CPU_RAM_MASK];
 
     // 0x2000 - 0x3FFF: PPU 寄存器 (8 字节, 镜像 1024 次)
     // TODO: 连接到 PPU 后进行转发
@@ -65,7 +71,7 @@ u8 Bus::cpu_read(u16 address){
 void Bus::cpu_write(u16 address, u8 value) {
     //0x0000 - 0x1FFF: CPU RAM
     if (address <= 0x1FFF) {
-        cpu_rom[address & CPU_RAM_MASK] = value;
+        cpu_ram[address & CPU_RAM_MASK] = value;
         return;
     }
 

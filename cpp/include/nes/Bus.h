@@ -16,12 +16,11 @@ Bus 是连接一切的枢纽，NRE CPU 地址空间布局：
     0x4020 - 0xFFFF  → 卡带 (PRG-ROM / Mapper)
 */
 
-
 class Bus
 {
 private:
     //CPU 内置 RAM: 2KB (0x0000 - 0x07FF, 其余到 0x1FFF 是镜像)
-    std::vector<u8> cpu_rom;
+    std::vector<u8> cpu_ram;
     // 连接的设备
     Cartridge* cartridge;
     CPU* cpu;

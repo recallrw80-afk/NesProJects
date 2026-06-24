@@ -13,7 +13,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)            # 禁用编译器扩展（使用标准 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.cc" "src/*.c")
 add_executable(${PROJECT_NAME} ${SOURCES} main.cpp
         include/nes/Bus.h
-        include/nes/CPU.h)
+        include/nes/CPU.h
+        include/nes/PPU.h)
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
