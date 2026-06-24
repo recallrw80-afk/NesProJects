@@ -65,6 +65,6 @@ public:
 
 private:
     // 地址递增(根据 PPUCTRL bit2 决定 +1 还是 +32)
-    void increment_vram(u16 address);
+    void increment_vram_addr();
 };
 #endif //NES_PPU_H
