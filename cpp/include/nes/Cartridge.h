@@ -5,7 +5,16 @@
 #ifndef NES_CARTIDGE_H
 #define NES_CARTIDGE_H
 #include <vector>
-#include <types.h>
+#include <basic/types.h>
+#include <nes/Mapper.h>
+#include <nes/Mapper0.h>
+
+// 定义枚举，表示镜像模式
+enum Mirroring
+{
+    VERTICAL,   //编译器默认赋值为0
+    HORIZONTAL  //编译器默认赋值为1
+};
 
 class Cartridge
 {
@@ -18,10 +27,13 @@ class Cartridge
         u16 mapper_id;
         u8 prg_banks_count;        //16KB bank 数量
         u8 chr_banks_count;        //8KB bank 数量
-        bool mirroring;     //水平或垂直镜像
+        Mirroring mirroring;     //水平或垂直镜像
         bool battery_ram;   //是否有存档
         bool trainer;       //512字节训练器
     public:
+        Cartridge() : mapper(nullptr) {}
+        ~Cartridge() { delete mapper; }
+
         bool load(const std::string& filename);
 
         // CPU 通过总线读取 PRC-rom
@@ -38,13 +50,5 @@ class Cartridge
         // 打印当前信息
         void print_info() const;
 };
-
-// 定义枚举，表示镜像模式
-enum Mirroring
-{
-    VERTICAL,   //编译器默认赋值为0
-    HORIZONTAL  //编译器默认赋值为1
-};
-
 
 #endif //NES_CARTIDGE_H

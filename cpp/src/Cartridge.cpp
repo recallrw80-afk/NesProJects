@@ -1,6 +1,9 @@
 #include <string>
 #include <iostream>
-#include "Cartridge.h"
+#include <basic/types.h>
+#include <nes/Mapper.h>
+#include <nes/Mapper0.h>
+#include <nes/Cartridge.h>
 #include <ios>
 #include <fstream>
 
@@ -109,7 +112,58 @@ bool Cartridge::load(const std::string& filename)
         );
     }
 
+    //根据 mapper_id 创建对应的 Mapper
+    switch (mapper_id) {
+        case 0:
+            mapper = new Mapper0(prg_banks_count,chr_banks_count);
+            break;
+        default:
+            std::cerr << "Unsupported mapper: " << (int)mapper_id << std::endl;
+            return false;
+    }
+
     return true;
+}
+
+// cpu 读
+u8 Cartridge::cpu_read(u16 address) {
+    // NROM (Mapper 0): 无 bank switching，直接映射
+    // CPU 地址空间: 0x4020 - 0xFFFF 属于卡带
+    //   0x4020 - 0x5FFF: 扩展 ROM (罕见)
+    //   0x6000 - 0x7FFF: SRAM (存档用)
+    //   0x8000 - 0xBFFF: PRG-ROM 低 16KB
+    //   0xC000 - 0xFFFF: PRG-ROM 高 16KB (若只有 1 bank 则 mirror)
+    if (address >= 0x8000) {
+        size_t mapped_addr = mapper->cpu_map_read(address);
+        if (mapped_addr < prg_rom.size())
+            return prg_rom[mapped_addr];
+    }
+
+    return 0;
+}
+//cpu 写
+void Cartridge::cpu_write(u16 address, u8 value) {
+    // 地址 0x8000 - 0xFFFF: 对于有 bank switching 的 Mapper，这写 Mapper 寄存器
+    // 对于 Mapper 0 (NROM): 无寄存器，CPU 只读 PRG-ROM
+    if (address >= 0x8000) {
+        mapper->cpu_map_write(address,value);
+    }
+}
+// ppu 读取
+u8 Cartridge::ppu_read(u16 address) {
+    // PPU 地址空间: 0x0000 - 0x1FFF 属于卡带 CHR
+    // 对于 Mapper 0: 直接映射
+    if (address < chr_rom.size())
+        return chr_rom[address];
+    return 0;
+}
+// ppu 写
+void Cartridge::ppu_write(u16 address, u8 value) {
+    // CHR-RAM 写入 (当 chr_banks_count == 0 时)
+    // CHR-ROM 不可写
+    if (address < chr_rom.size() && chr_banks_count == 0 ) {
+        chr_rom[address] = value;
+    }
 }
 
 void Cartridge::print_info() const

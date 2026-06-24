@@ -1,5 +1,5 @@
 #include <iostream>
-#include <Cartridge.h>
+#include <include/nes/Cartridge.h>
 
 int main(int argc, char** argv)
 {
