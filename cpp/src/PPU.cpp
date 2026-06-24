@@ -11,28 +11,28 @@ constexpr u16 PALETTE_SIZE = 0x0000;
 constexpr u16 PALETTE_MASK = 0x07FF;
 
 // PPU 寄存器偏移 (相对 0x2000)
-constexpr u16 PPUCTRL = 0;
-constexpr u16 PPUMASK = 1;
-constexpr u16 PPUSTATUS = 2;
-constexpr u16 PPUADDR = 3;
-constexpr u16 OAMDATA = 4;
-constexpr u16 OAMADDR = 5;
-constexpr u16 PPUSCORLL = 6;
-constexpr u16 PPUDATA = 7;
+constexpr u16 PPUCTRL = 0; // $2000 - 控制器
+constexpr u16 PPUMASK = 1; // $2001 - 掩码
+constexpr u16 PPUSTATUS = 2; // $2002 - 状态
+constexpr u16 PPUADDR = 3; // $2003 - OAM 地址
+constexpr u16 OAMDATA = 4; // $2004 - OAM 数据
+constexpr u16 OAMADDR = 5; // $2005 - 滚动
+constexpr u16 PPUSCORLL = 6; // $2006 - 地址
+constexpr u16 PPUDATA = 7; //$2007 - 数据
 
 PPU::PPU()
-    : vram(VRAM_SIZE,0)
-    , palette_ram(PALETTE_SIZE,0)
-    ,cartridge(nullptr)
-    ,ctrl(0)
-    ,mask(0)
-    ,status(0)
-    ,oam_addr(0)
-    ,scroll_x(0)
-    ,scroll_y(0)
-    ,vram_addr(0)
-    ,vram_data(0)
-    ,write_latch(0)
-    ,latch_toggle(false)
-    ,read_buffer(0)
-{}
+    : vram(VRAM_SIZE, 0)
+      , palette_ram(PALETTE_SIZE, 0)
+      , cartridge(nullptr)
+      , ctrl(0)
+      , mask(0)
+      , status(0)
+      , oam_addr(0)
+      , scroll_x(0)
+      , scroll_y(0)
+      , vram_addr(0)
+      , vram_data(0)
+      , write_latch(0)
+      , latch_toggle(false)
+      , read_buffer(0) {
+}
