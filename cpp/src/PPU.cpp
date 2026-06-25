@@ -10,14 +10,16 @@ constexpr u16 VRAM_MASK = 0x07FF;
 constexpr u16 PALETTE_SIZE = 32;
 constexpr u16 PALETTE_MASK = 0x001F;
 
+constexpr u16 PPU_REF_MASK = 0x2007; //8 字节, 镜像 1024次
+
 // PPU 寄存器偏移 (相对 0x2000)
 constexpr u16 PPUCTRL = 0; // $2000 - 控制器
 constexpr u16 PPUMASK = 1; // $2001 - 掩码
 constexpr u16 PPUSTATUS = 2; // $2002 - 状态
-constexpr u16 PPUADDR = 3; // $2003 - OAM 地址
+constexpr u16 OAMADDR = 3; // $2003 - OAM 地址
 constexpr u16 OAMDATA = 4; // $2004 - OAM 数据
-constexpr u16 OAMADDR = 5; // $2005 - 滚动
-constexpr u16 PPUSCROLL = 6; // $2006 - 地址
+constexpr u16 PPUSCROLL = 5; // $2005 - 滚动
+constexpr u16 PPUADDR = 6; // $2006 - 地址
 constexpr u16 PPUDATA = 7; //$2007 - 数据
 
 PPU::PPU()
@@ -37,7 +39,7 @@ PPU::PPU()
       , read_buffer(0) {
 }
 
-void PPU::connect_cartridge(Cartridge* cart) {
+void PPU::connect_cartridge(Cartridge *cart) {
     cartridge = cart;
 }
 
@@ -54,15 +56,15 @@ u8 PPU::register_read(u16 address) {
     switch (reg) {
         case PPUSTATUS: {
             // 读取状态寄存器：bit7 = VBlank, 读取后清除 VBlank 标志
-            u8 reustlt = status;
+            u8 result = status;
             status &= ~0x80; // 清除 bit7 (VBlank)
-            latch_toggle = true;  // 读取 STATUS 会重置写锁存
-            return reustlt;
+            latch_toggle = false; // 读取 STATUS 重置写锁存到 first-write 状态
+            return result;
         }
         case OAMADDR:
             // OAM 数据读取 — OAM 未实现，暂返回 0
             return 0;
-        case PPUADDR: {
+        case PPUDATA: {
             // 读取 VRAM 数据
             // 注意：有 1 字节的缓冲延迟（除调色板外）
             u8 result = read_buffer;
@@ -75,18 +77,17 @@ u8 PPU::register_read(u16 address) {
                     read_buffer = cartridge->ppu_read(addr);
                 else
                     read_buffer = 0;
-            }
-            else if (addr < 0x3FFF) {
+            } else if (addr < 0x3F00) {
                 // Nametable VRAM (0x2000-0x2FFF, 镜像
-                read_buffer = vram[addr & VRAM_MASK];
-            }
-            else {
+                read_buffer = vram[(addr & VRAM_MASK)];
+            } else {
                 // Palette RAM (0x3F00-0x3FFF)
                 u8 palette_addr = (addr & PALETTE_MASK);
                 // 镜像: 0x3F10, 0x3F14, 0x3F18, 0x3F1C → 0x3F00, 0x3F04, 0x3F08, 0x3F0C
                 if (palette_addr >= 16 && (palette_addr & 0x03) == 0)
                     palette_addr -= 16;
-                read_buffer = palette_ram[palette_addr];
+                result = palette_ram[palette_addr]; // 立即返回调色板数据
+                read_buffer = palette_ram[palette_addr]; // 缓冲填入"下方的"nametable 数据
             }
             // 地址递增
             increment_vram_addr();
@@ -125,7 +126,7 @@ void PPU::register_write(u16 address, u8 value) {
             if (!latch_toggle) {
                 // 第一次写 x 滚动
                 scroll_x = value;
-            }else {
+            } else {
                 // 第二次写：Y 滚动
                 scroll_y = value;
             }
@@ -136,7 +137,7 @@ void PPU::register_write(u16 address, u8 value) {
         case PPUADDR: {
             if (!latch_toggle) {
                 write_latch = value;
-            }else {
+            } else {
                 // 第二次写：低字节，组合成完整地址
                 vram_addr = (static_cast<u16>(write_latch) << 8) | value;
             }
@@ -151,7 +152,7 @@ void PPU::register_write(u16 address, u8 value) {
                 // CHR-ROM / CHR-RAM 写入
                 if (cartridge != nullptr)
                     cartridge->ppu_write(addr, value);
-            } else if (addr < 0x3FFF) {
+            } else if (addr < 0x3F00) {
                 // Nametable VRAM
                 vram[addr & VRAM_MASK] = value;
             } else {
@@ -169,4 +170,3 @@ void PPU::register_write(u16 address, u8 value) {
             break;
     }
 }
-

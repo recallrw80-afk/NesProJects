@@ -12,9 +12,9 @@ class Mapper
 public:
     virtual ~Mapper() = default;
 
-    virtual size_t  cpu_map_read(u16 address) = 0;
-    virtual void    cpu_map_write(u16 address, size_t value) = 0;
-    virtual size_t  ppu_map_read(u16 address) = 0;
+    virtual u16  cpu_map_read(u16 address) = 0;
+    virtual void    cpu_map_write(u16 address, u8 value) = 0;
+    virtual u16  ppu_map_read(u16 address) = 0;
     virtual void    ppu_map_write(u16 address, u8 value) = 0;
 };
 

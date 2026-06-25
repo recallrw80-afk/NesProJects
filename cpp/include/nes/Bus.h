@@ -6,6 +6,7 @@
 #define NES_BUS_H
 #include <basic/types.h>
 #include <nes/CPU.h>
+#include <nes/PPU.h>
 #include <nes/Cartridge.h>
 
 /*
@@ -24,6 +25,7 @@ private:
     // 连接的设备
     Cartridge* cartridge;
     CPU* cpu;
+    PPU* ppu;
 
 public:
     Bus(); //构造函数
@@ -32,6 +34,7 @@ public:
     // 插入卡带
     void insert_cartridge(Cartridge *cart);
     void connect_cpu(CPU *cpu_ptr);
+    void connect_ppu(PPU *ppu_ptr);
 
     // CPU 侧读写（整个 64kb 地址空间）
     u8 cpu_read(u16 address);
