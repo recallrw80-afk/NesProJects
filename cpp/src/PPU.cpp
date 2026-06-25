@@ -10,7 +10,7 @@ constexpr u16 VRAM_MASK = 0x07FF;
 constexpr u16 PALETTE_SIZE = 32;
 constexpr u16 PALETTE_MASK = 0x001F;
 
-constexpr u16 PPU_REF_MASK = 0x2007; //8 字节, 镜像 1024次
+// constexpr u16 PPU_REF_MASK = 0x2007; //8 字节, 镜像 1024次
 
 // PPU 寄存器偏移 (相对 0x2000)
 constexpr u16 PPUCTRL = 0; // $2000 - 控制器
@@ -33,7 +33,7 @@ PPU::PPU()
       , scroll_x(0)
       , scroll_y(0)
       , vram_addr(0)
-      , vram_data(0)
+      // , vram_data(0)
       , write_latch(0)
       , latch_toggle(false)
       , read_buffer(0) {
@@ -78,8 +78,8 @@ u8 PPU::register_read(u16 address) {
                 else
                     read_buffer = 0;
             } else if (addr < 0x3F00) {
-                // Nametable VRAM (0x2000-0x2FFF, 镜像
-                read_buffer = vram[(addr & VRAM_MASK)];
+                // Nametable VRAM (0x2000-0x2FFF, 镜像)
+                read_buffer = vram[addr & VRAM_MASK];
             } else {
                 // Palette RAM (0x3F00-0x3FFF)
                 u8 palette_addr = (addr & PALETTE_MASK);

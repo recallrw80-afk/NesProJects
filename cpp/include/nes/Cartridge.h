@@ -5,6 +5,7 @@
 #ifndef NES_CARTIDGE_H
 #define NES_CARTIDGE_H
 #include <vector>
+#include <string>
 #include <basic/types.h>
 #include <nes/Mapper.h>
 #include <nes/Mapper0.h>

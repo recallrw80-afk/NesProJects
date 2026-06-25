@@ -15,7 +15,7 @@ private:
 public:
     Mapper0(u8 prg,u8 chr) : prg_bank(prg), chr_bank(chr) {}
 
-    size_t cpu_map_read(u16 address) override {
+    u16 cpu_map_read(u16 address) override {
         // 0x8000-0xFFFF -> 若 1 bank : mirror; 若 2 bank: 直接映射
         if (prg_bank == 1)
             return (address - 0x8000) & 0x3FFF; // 16KB mirror
@@ -23,7 +23,7 @@ public:
     }
 
     void cpu_map_write(u16 address, size_t value) override {}
-    size_t ppu_map_read(u16 address) override {return address;}
+    u16 ppu_map_read(u16 address) override {return address;}
     void ppu_map_write(u16 address, u8 value) override {};
 };
 
