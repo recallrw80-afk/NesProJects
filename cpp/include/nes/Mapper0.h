@@ -22,7 +22,7 @@ public:
         return address - 0x8000;
     }
 
-    void cpu_map_write(u16 address, size_t value) override {}
+    void cpu_map_write(u16 address, u8 value) override {}
     u16 ppu_map_read(u16 address) override {return address;}
     void ppu_map_write(u16 address, u8 value) override {};
 };

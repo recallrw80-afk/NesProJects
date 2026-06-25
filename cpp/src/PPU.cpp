@@ -87,7 +87,7 @@ u8 PPU::register_read(u16 address) {
                 if (palette_addr >= 16 && (palette_addr & 0x03) == 0)
                     palette_addr -= 16;
                 result = palette_ram[palette_addr]; // 立即返回调色板数据
-                read_buffer = palette_ram[palette_addr]; // 缓冲填入"下方的"nametable 数据
+                read_buffer = vram[palette_addr]; // 缓冲填入"下方的"nametable 数据
             }
             // 地址递增
             increment_vram_addr();

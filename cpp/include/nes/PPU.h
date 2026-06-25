@@ -33,7 +33,7 @@ private:
     // PPUADDR 地址
     u16 vram_addr;
     // PPUDATA 数据
-    u16 vram_data;
+    // u16 vram_data;
 
     // 暂存器(用于 PPUSCORLL/ PPUADDR的两次写入)
     u8 write_latch;
