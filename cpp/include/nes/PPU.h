@@ -25,7 +25,7 @@ private:
     u8 mask;
     // PPUSTATUS 状态
     u8 status;
-    // QAMADDR OAM 地址
+    // OAMADDR OAM 地址
     u8 oam_addr;
     // PPUSCROLL 滚动
     u8 scroll_x;
@@ -35,7 +35,7 @@ private:
     // PPUDATA 数据
     // u16 vram_data;
 
-    // 暂存器(用于 PPUSCORLL/ PPUADDR的两次写入)
+    // 暂存器(用于 PPUSCROLL/ PPUADDR的两次写入)
     u8 write_latch;
     bool latch_toggle; //false 第一次写入， ture 第二次写入
 
@@ -56,12 +56,12 @@ public:
     void register_write(u16 address, u8 value);
 
     //VRAM 访问 (通过 PPUADDR / PPUDATA)
-    u8 vram_read(u16 address);
-    void vram_write(u16 address, u8 value);
+    // u8 vram_read(u16 address);
+    // void vram_write(u16 address, u8 value);
 
     // 调色板访问
-    u8 palette_read(u16 address);
-    void palette_write(u16 address, u8 value);
+    // u8 palette_read(u16 address);
+    // void palette_write(u16 address, u8 value);
 
 private:
     // 地址递增(根据 PPUCTRL bit2 决定 +1 还是 +32)
