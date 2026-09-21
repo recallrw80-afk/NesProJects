@@ -583,7 +583,8 @@ void CPU::SBC()
 void CPU::CMP()
 {
     u8 m = fetch();
-    flag_c = static_cast<u16>(a) >= static_cast<u16>(m);
-    flag_z = a == m;
-    flag_n = a - m;
+    u8 tmp = static_cast<u16>(a) - static_cast<u16>(m);
+    flag_c = tmp >= static_cast<u16>(m);
+    flag_z = tmp == m;
+    flag_n = (tmp & 0x80);
 }
