@@ -185,7 +185,7 @@ void CPU::write_mem(u16 addr, u8 data)
         bus->cpu_write(addr, data);
 }
 
-
+//取操作数
 u8 CPU::fetch()
 {
     if (table[opcode].mode != &CPU::IMP && table[opcode].mode != &CPU::ACC)
@@ -490,4 +490,100 @@ void CPU::CLV()
     flag_v = false;
 }
 
+//逻辑运算组
+// 1 & 1
+//更新 flag_z
+//更新 flag_n
+void CPU::AND()
+{
+    a = a & fetch();
+    flag_z = (a == 0);
+    flag_n = (a & 0x80);
+}
+// 1 | 1
+void CPU::ORA()
+{
+    a = a | fetch();
+    flag_z = (a == 0);
+    flag_n = (a & 0x80);
+}
+// 1 ^ 1
+void CPU::EOR()
+{
+    a = a ^ fetch();
+    flag_z = (a == 0);
+    flag_n = (a & 0x80);
+}
 
+// 算术/移位
+void CPU::INX()
+{
+    x = x + 1;
+    flag_z = (x == 0);
+    flag_n = (x & 0x80);
+}
+void CPU::INY()
+{
+    y = y + 1;
+    flag_z = (y == 0);
+    flag_n = (y & 0x80);
+}
+void CPU::DEX()
+{
+    x = x - 1;
+    flag_z = (x == 0);
+    flag_n = (x & 0x80);
+}
+void CPU::DEY()
+{
+    y = y - 1;
+    flag_z = (y == 0);
+    flag_n = (y & 0x80);
+}
+// 寄存器不懂内存地址+1
+void CPU::INC()
+{
+    u8 tmp = fetch();
+    tmp = tmp + 1;
+    flag_z = (tmp == 0);
+    flag_n = (tmp & 0x80);
+    write_mem(addr_abs,tmp);
+}
+void CPU::DEC()
+{
+    u8 tmp = fetch();
+    tmp = tmp - 1;
+    flag_z = (tmp == 0);
+    flag_n = (tmp & 0x80);
+    write_mem(addr_abs,tmp);
+}
+// 先宽后窄
+void CPU::ADC()
+{
+    u8 m = fetch();
+    u16 tmp = static_cast<u16>(a) + static_cast<u16>(m) + (flag_c ? 1u : 0u);
+    flag_c = (tmp > 0xFF);
+    a = (tmp & 0x00FF);
+    flag_z = (a == 0);
+    flag_n = (a & 0x80);
+}
+
+void CPU::SBC()
+{
+    u8 m = fetch();
+    bool flag_c_tmp = flag_c;
+    flag_c = static_cast<u16>(a) >= static_cast<u16>(m) + (flag_c_tmp ? 0u : 1u);
+    u16 tmp = static_cast<u16>(a) - static_cast<u16>(m) - (flag_c_tmp ? 0u : 1u);
+    a = (tmp & 0xFF);
+    flag_z = (a == 0);
+    flag_n = (a & 0x80);
+}
+
+//比较指令
+void CPU::CMP()
+{
+    u8 m = fetch();
+    flag_c = static_cast<u16>(a) >= static_cast<u16>(m);
+    flag_z = a == m;
+    flag_n = a - m;
+}

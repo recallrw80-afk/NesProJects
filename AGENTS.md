@@ -1,65 +1,78 @@
-# NES 模拟器（C++）项目记忆
+# NES 模拟器（C++）— AGENTS.md
 
-## 项目状态
+学习型单文件树 C++20 NES 模拟器。无测试 / CI / README / opencode 配置。入口：`main.cpp`，CMake 目标名 **`Nes`**。
 
-### 已完成组件
+## 教学模式（先读这个）
 
-| 文件                      | 状态    | 说明                                                                                                       |
-| ------------------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `include/basic/types.h`   | ✅ 完成 | u8/u16/u32/u64/i8/i16/i32/i64/f32/f64 类型别名                                                             |
-| `include/nes/Mapper.h`    | ✅ 完成 | Mapper 抽象基类 (cpu_map_read/write, ppu_map_read/write)                                                   |
-| `include/nes/Mapper0.h`   | ✅ 完成 | Mapper0 (NROM) 实现，无 bank switching                                                                     |
-| `include/nes/Cartridge.h` | ✅ 完成 | Cartridge 声明：PRG/CHR ROM、SRAM、Mapper、iNES 头部字段                                                   |
-| `src/Cartridge.cpp`       | ✅ 完成 | iNES 文件加载、头部解析、Mapper 创建、CPU/PPU 读写转发                                                     |
-| `include/nes/Bus.h`       | ✅ 完成 | Bus 声明：cpu_ram (2KB)、Cartridge/CPU/PPU 指针、connect_cpu/connect_ppu                                   |
-| `src/Bus.cpp`             | ✅ 完成 | 64KB 地址空间解码，CPU RAM 读写，已连接 PPU（寄存器读写已转发）；APU 段仍 return 0                              |
-| `include/nes/PPU.h`       | ✅ 完成 | PPU 声明：VRAM (2KB)、调色板 (32B)、8 个寄存器、写锁存、读缓冲                                             |
-| `src/PPU.cpp`             | ✅ 完成 | PPU 寄存器读写完整逻辑（PPUCTRL/PPUMASK/PPUSTATUS/PPUSCROLL/PPUADDR/PPUDATA），VRAM/调色板镜像，读缓冲延迟；寄存器偏移常量命名($2003/2005/2006/2007)已修正 |
-| `include/nes/CPU.h`       | 🚧 进行中 | 寄存器/标志位/寻址模式/指令函数声明、Instruction 结构体与 256 项操作码表声明（已补 TYA 声明）             |
-| `src/CPU.cpp`             | 🚧 进行中 | 256 项操作码表（已验证：151 条官方指令全部正确，其余 XXX）、辅助函数、**寻址模式 13/13 全部已写**（IMP/IMM/ZP0/ZPX/ZPY/ABX/ABY/ABS/IZX/IZY/ACC/REL/IND）、REL/IND 的 3 个逻辑 bug 已修复（commit d8ed3c1）；指令函数体只实现 19 条（加载/存储/传送/标志位）→ 编译全过、链接失败（缺 37 条 + XXX）属正常 |
-| `src/Mapper.cpp`          | 📄 空   | 占位                                                                                                       |
-| `src/DMA.cpp`             | 📄 空   | 占位                                                                                                       |
-| `src/APU.cpp`             | 📄 空   | 占位                                                                                                       |
-| `main.cpp`                | ✅ 完成 | 加载 ROM、打印 Cartridge 信息（DEBUG 模式）                                                                |
-| `CMakeLists.txt`          | ✅ 完成 | C++20、GLOB_RECURSE 收集 src/*.cpp、多编译器警告选项                                                       |
+用户在学 6502/NES，约定是 **示范 + 用户自己写**：
 
-### 已知问题
+- 同类指令只示范 1–2 条并讲原理，**其余留给用户**。禁止一次性实现全部指令、`reset/step/nmi/irq`，或整块 CPU 流程。
+- 禁止“照抄 A 换成 B”空模板；讲心智模型：取指-译码-执行、寻址如何落到 `addr_abs`、谁改标志位。
+- 放慢节奏，确认理解再前进。用户已掌握：hex/字节/bit、`& 0xFF` / `(hi<<8)|lo`、PC 前移、寻址统一框架（IZX 先加后读 / IZY 先读后加、跨页加周期）。
+- 已修好的逻辑 bug 不要“顺手重写”。当前任务是**补缺失函数体**，不是重构。
 
-1. ~~Bus.cpp 地址解码 bug~~ ✅ 已修复（PPU 0x2000-0x3FFF / APU 0x4000-0x4017 已正确区分）
-2. ~~PPU.cpp 寄存器偏移常量命名错位~~ ✅ 已修复（$2003=OAMADDR、$2005=PPUSCROLL、$2006=PPUADDR、$2007=PPUDATA）
-3. ~~Bus 未连接 PPU~~ ✅ 已修复（Bus 有 ppu 成员 + connect_ppu，寄存器读写已转发）
-4. ~~CPU.cpp `REL()`~~ ✅ 已修复（commit d8ed3c1，`addr_rel` + `addr_rel |= 0xFF00`）
-5. ~~CPU.cpp `IND()`~~ ✅ 已修复（同上，`| p_lo`）
-6. **教训（仍有效）**：这类逻辑 bug 在语法/类型层面合法，`-Werror -Wall -Wextra -Wconversion` 均拦不住，只能靠人工 review。
-7. **待修：CMakeLists.txt 的警告选项没有生效** —— `add_compile_options()` 在第 40 行调用，而 `add_executable()` 在第 14 行；CMake 的 `add_compile_options` 只影响其后创建的 target，`flags.make` 里实际只有 `-g -O0 -DDEBUG -std=c++20`（Release 分支的 `-flto` 同样失效）。真正打开这些旗标后，现有代码会报：Mapper0.h:25/27 未使用参数（每个编译单元 4 条）、CPU.cpp:275/286 与 PPU.cpp:48 的 `int → u16` 转换。
+若链接报大量 `undefined reference to CPU::…`，**这是预期状态**，不要为了“让工程绿”而代写全部指令。
 
-### 下一步
+## 代码现状（以 `src/CPU.cpp` 为准）
 
-1. ~~先修 REL/IND 的 3 个逻辑 bug~~ ✅ 已完成（commit d8ed3c1）
-2. **实现全部指令函数体 + reset/step/nmi/irq**（大工程，教学模式推进）——链接目前失败于此，是必经之路。用户已理解寻址模式与底层概念，可进入此阶段；教学法：讲 1-2 条的原理（如 LDA/STA/JMP，含标志位 Z/N 的设立规则）+ 用户手写同类（ZCode 不代写，见下方 ⛔ 规则）
-   - 当前进度：19 条已实现（LDA/LDX/LDY、STA/STX/STY、TAX/TAY/TXA/TYA/TSX/TXS、SEC/CLC/SED/CLD/SEI/CLI/CLV）；待补 37 条 + XXX + reset/step/nmi/irq
-   - 已讲待写：逻辑运算家族 AND/ORA/EOR、比较家族 CMP/CPX/CPY（含 C=无借位 的语义）
-3. 实现 APU 和 DMA
-4. 之后接 PPU 渲染、主循环、DMA 等
+| 项 | 事实 |
+| --- | --- |
+| 完成 | Cartridge/Mapper0、Bus 解码、PPU 寄存器读写、CPU 13 种寻址 + 读写/栈/标志辅助函数 |
+| 指令体 | **仅 19 条已定义**：LDA/LDX/LDY/STA/STX/STY、TAX/TAY/TXA/TYA/TSX/TXS、SEC/CLC/SED/CLD/SEI/CLI/CLV |
+| 未定义 | **AND 也没有空壳**；其余官方指令、`XXX`、`reset`/`step`/`nmi`/`irq` 均未写 |
+| 占位 | `src/Mapper.cpp`、`src/DMA.cpp`、`src/APU.cpp` 为空 |
+| Bus | PPU 已转发；**APU/手柄 0x4000–0x4017 仍 stub** |
 
-## 教学模式约定 ⭐
+256 项操作码表已填完——链接错误来自表引用了未实现的成员函数，**不要改表来“消错”**。
 
-- **⛔ 硬性规则（用户明确要求）：项目代码 100% 由用户手写。** ZCode **不得 Edit/Write 任何项目文件**（`src/`、`include/`、`main.cpp`、`CMakeLists.txt` 等一律不许动，连"示范"也不行）；**"示范"代码只允许输出在对话里**。ZCode 的职责：讲原理与心智模型、在对话中给示范代码和思考题、回答提问、在用户写完后做编译与静态核查（只报告结果，不改用户代码）。违反此规则时用户会回退改动。
-- **工作方式：所有代码由用户自己动手写**：讲清原理，留同类练习让用户自己写，不要直接全部实现
-- 已讲过的概念：mode()/oper() 分离设计（寻址模式函数只负责算 addr_abs 并推进 pc）、小端序、零页回绕、间接寻址（IZX 三步取址）、跨页加周期
-- **⚠️ 教学法转变（因用户"写了大量代码仍不理解"而触发）**：不再给"照抄 x 换 y"式模板，改讲底层心智模型。核心：一个寻址模式回答**同一个问题**——"如何根据指令字节 + 寄存器算出 operand 真正所在的内存地址？"，结果统一落到 `addr_abs`。配合 CPU 的"取指-译码-执行"循环解释每个内部变量（opcode/pc/fetched/addr_abs/addr_rel）。放慢节奏，每步确认理解后再前进。
-- **✅ 本阶段已让用户真正掌握（用户主动表示懂了）**：十六进制/字节/bit 换算（0xFF=255、1字节=2个hex位）、按位与 `&`、`& 0xFF` 取低字节 vs `& 0xFF00` 取高字节、`(hi<<8)|lo`/`<<8` 拼 16 位地址（×256=×16²）、PC 作为前移指针（`pc++` 后缀=先读后挪）、**寻址模式统一框架**（直接vs间接、加X/Y、页=256字节、IZX先加后读/IZY先读后加、跨页加周期）。用户现已能自行推导任意寻址模式，不再靠背。
+下一步顺序（教学推进，勿打乱）：当前用户在写 **AND** → 之后同类逻辑运算（ORA/EOR）→ 算术/移位 → 分支/跳转 → 栈/中断 → 最后 `reset`/`step`/`nmi`/`irq`。
 
-## 架构约定
+## 构建（本机已验证）
 
-- 类型：u8/u16/u32/u64（定义在 basic/types.h）
-- C++20 标准，禁用编译器扩展（`CMAKE_CXX_EXTENSIONS OFF`）
-- 命名：成员变量 snake_case，类 PascalCase
-- 构造函数使用初始化列表（参考 Bus 风格）
-- Bus 是中央枢纽，连接 CPU、PPU、Cartridge
-- ~~codegraph sync~~ 本机无 `cpp/` 子目录，此约定暂不适用
-- **构建（用户在 CLion 里构建）**：CLion 自带。cmake 在 `...\CLion\bin\cmake\win\x64\bin\cmake.exe`，MinGW `g++.exe` 在 `...\CLion\bin\mingw\bin\`（g++ 15.2.0）。两目录加进 PATH 后执行：
-  `cmake -S <root> -B build_debug -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=<mingw>\g++.exe && cmake --build build_debug`
-  当前结果：**编译全过，链接因指令函数体未实现而失败（预期）**。注意：过去记为"无告警"是因为警告旗标根本没生效（见已知问题 7）。
-- **ZCode 侧的编译核查通道**：ZCode 的 shell 里找不到上述 CLion 工具链，但 WSL 的 Debian 发行版里有 g++ 14.2.0 + cmake 3.31.6，可直接用来核查用户手写的代码（构建目录放 WSL 侧 `~/nes_build`，不污染仓库）：
-  `MSYS_NO_PATHCONV=1 wsl.exe -d Debian -- bash -lc 'cd /mnt/d/devfiles/NesProJects && g++ -std=c++20 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-unused-parameter -Iinclude -Isrc -c src/CPU.cpp -o /tmp/cpu.o'`
+**已有 `build_debug` 缓存绑定 CLion + MinGW Makefiles。** 换 generator（例如改用 `CMakePresets.json` 的 Ninja）必须换二进制目录，或先删该目录下的 `CMakeCache.txt`。
+
+```powershell
+# 与现有 build_debug 一致（CLion 自带工具链）
+$clion = "C:\Users\user001\AppData\Local\Programs\CLion"
+$cmake = "$clion\bin\cmake\win\x64\bin\cmake.exe"
+$gpp   = "$clion\bin\mingw\bin\g++.exe"   # g++ 15.2.0
+& $cmake -S . -B build_debug -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER="$gpp"
+& $cmake --build build_debug
+```
+
+易错点：
+
+- CLion 在 **`%LOCALAPPDATA%\Programs\CLion`**，不是 `Program Files\JetBrains`。
+- 第二套工具链（WinGet MinGW-W64：cmake 4.4.1 / g++ 16.1.0 / ninja 1.13.2）在  
+  `…\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\`。`CMakePresets.json` 要求 Ninja。
+- **不传 `-DCMAKE_BUILD_TYPE` 时 CMake 默认 Release**；`main.cpp` 里 `cart.print_info()` 只在 `DEBUG` 宏下编译，Release 跑 ROM 看不到卡带信息。
+- 源收集在**根** `CMakeLists.txt`：`GLOB_RECURSE src/*.cpp` + `main.cpp`。`src/CMakeLists.txt` 是空文件，别往里加 target。
+- GNU 警告当错误：`-Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion`。
+- 产物：`<build>/bin/Nes.exe`。无测试命令；验证 = 编译/链接，链完后：
+  `build_debug\bin\Nes.exe ".ines\Super Mario Bros.nes"`
+- 示例 ROM：`.ines/Super Mario Bros.nes`（路径含空格，记得加引号）。
+
+## 架构（文件名看不出的部分）
+
+- 头文件 `include/basic|nes/`，实现 `src/`。类型别名 `include/basic/types.h`（`u8`/`u16`/…）。
+- **Bus 是中枢**：0x0000–0x1FFF = 2KB RAM 镜像；0x2000–0x3FFF → PPU 寄存器；0x4000–0x4017 → APU/IO（未接）；0x4020+ → Cartridge/Mapper。
+- **CPU 设计**：寻址模式函数与指令函数均返回 **`void`**。寻址模式只写 `addr_abs`/`addr_rel`（跨页时 `cycles++`）并推进 `pc`；指令函数经 `fetch()` / `addr_abs` 读写，用 **`set_flags`** 或直接赋 `flag_*`（不是 `set_flag`）。
+- 构造函数用初始化列表（`Bus`/`CPU`/`PPU`）；成员 `snake_case`，类 `PascalCase`。
+- `docs/L01–L39.md` 是课程笔记（**缺 L19**）。部分笔记里的 `D:/code/rust/nes_core/...` 是 **Rust 参考实现路径**，不在本仓库，不要去改那些路径。
+
+## 逻辑坑（编译器拦不住，`-Werror` 也拦不住）
+
+这些曾是真 bug，审查时重点看：
+
+1. Bus：PPU 区间与 APU 区间必须分开解码。
+2. PPU 偏移：`$2003=OAMADDR`，`$2005=PPUSCROLL`，`$2006=PPUADDR`，`$2007=PPUDATA`。
+3. `REL()`：`addr_rel = read_mem(pc++)`，为负时 `addr_rel |= 0xFF00`。
+4. `IND()`：低字节用 `p_lo`；指针低字节 0xFF 时高字节从 `$xx00` 回绕（6502 硬件 bug）。
+
+写指令时：先确认寻址已算出正确操作数地址，再写操作本体；结果影响 Z/N；**TXS 不改标志**。
+
+## 禁止
+
+- 不要替用户写完剩余指令或 CPU 控制流。
+- 不要未经用户要求改动已验证的寻址模式/操作码表。
+- 不要假设存在测试框架、除 ROM 外的 fixture，或 `cpp/` codegraph 约定。
