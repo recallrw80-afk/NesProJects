@@ -188,6 +188,7 @@ void CPU::write_mem(u16 addr, u8 data)
 //取操作数
 u8 CPU::fetch()
 {
+    //这个操作数没有内存地址
     if (table[opcode].mode != &CPU::IMP && table[opcode].mode != &CPU::ACC)
     {
         fetched = read_mem(addr_abs);
@@ -588,3 +589,36 @@ void CPU::CMP()
     flag_z = tmp == m;
     flag_n = (tmp & 0x80);
 }
+
+// 逻辑右移动 Logical Shift Right
+void CPU::LSR()
+{
+    u8 tmp = fetch();
+    flag_c = (tmp & 0x01);
+    tmp = static_cast<u8>(tmp >> 1);
+    flag_z = (tmp == 0);
+    flag_n = (tmp &  0x80);
+    //这个操作数有没有内存地址 ?
+    if (table[opcode].mode != &CPU::ACC) {
+        write_mem(addr_abs,tmp);
+    }else {
+        a = tmp;
+    }
+}
+
+// Rotate Left，循环左移（带进位）
+void CPU::ROL()
+{
+    u8 tmp = fetch();
+    u8 tmp_a = flag_c;
+    flag_c = (tmp & 0x01);
+    
+}
+
+// Rotate Right，循环右移（带进位）
+void CPU::ROR()
+{
+
+}
+// Arithmetic Shift Left 算术左移
+
